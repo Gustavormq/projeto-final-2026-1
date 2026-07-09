@@ -1,8 +1,8 @@
 # Agente de Previsão de Churn com Explicação por IA
 
-**Aplicação:** [PREENCHER: link do deploy]
-**Repositório:** [PREENCHER: link do GitHub]
-**Equipe:** [PREENCHER: nome(s) do(s) integrante(s)]
+**Aplicação:** https://projeto-final-2026-1-production.up.railway.app
+**Repositório:** https://github.com/Gustavormq/projeto-final-2026-1/tree/main/(1-1_gustavo)
+**Equipe:** [Gustavo da Rocha]
 **Trilha:** Trilha 1 — Predição tabular, projeto 1.1 (Previsão de Churn)
 
 ---
@@ -77,7 +77,7 @@ Para o LLM, exploramos dois provedores:
 
 ### CI/CD
 
-[PREENCHER: se implementado, ex. GitHub Actions rodando testes a cada push. Se não implementado: "Não implementamos CI/CD automatizado neste ciclo por restrição de tempo; o build e testes foram feitos manualmente antes de cada entrega."]
+"Não implementamos CI/CD automatizado neste ciclo por restrição de tempo; o build e testes foram feitos manualmente antes de cada entrega."
 
 ---
 
@@ -129,7 +129,7 @@ Para o LLM, exploramos dois provedores:
 - **Linha de base:** um classificador que sempre prevê "não cancela" atinge 73,5% de acurácia sem identificar nenhum cliente em risco — usado como referência para justificar por que acurácia não é a métrica adequada aqui.
 - **Feature importance (top 3):** `TotalCharges` (0.18), `tenure` (0.16), `MonthlyCharges` (0.15) — indicando que clientes novos e com maior gasto mensal concentram o maior risco.
 
-[PREENCHER: latência ponta a ponta medida, custo por interação se usar API paga, taxa de acionamento do fallback observada em teste]
+Latência ponta a ponta: média de 11,89s (medições: 13,09s / 12,97s / 9,61s), utilizando LLM local (LM Studio, Llama 3 8B). A maior parte do tempo é consumida pela geração de texto do LLM — o modelo estatístico (Random Forest) responde em milissegundos. Essa latência é uma limitação conhecida de LLMs locais rodando em GPU de consumidor; a versão com Anthropic API tende a ser significativamente mais rápida, ao custo de depender de um provedor pago.
 
 ### UX
 
@@ -145,7 +145,7 @@ A interface permite que o usuário insira dados do cliente e receba, em segundos
 
 ## 5. Demonstração
 
-[PREENCHER: link do vídeo — grave localmente com LM Studio ativo, mostrando um caso de risco alto e um de risco baixo, e opcionalmente o cenário de fallback com o LM Studio desligado]
+https://youtu.be/wo9p_HljWs8
 
 ---
 
@@ -167,7 +167,7 @@ A interface permite que o usuário insira dados do cliente e receba, em segundos
 
 **Quem pode ser prejudicado por um erro do sistema?** Falsos negativos (cliente em risco não identificado) resultam em perda de receita sem chance de ação preventiva — custo para a empresa, não diretamente para o cliente. Falsos positivos podem gerar contato de retenção desnecessário/inoportuno para um cliente que não pretendia cancelar.
 
-**Risco de viés:** o dataset não inclui variáveis demográficas sensíveis (raça, gênero explícito como variável causal relevante), mas `gender` está entre as features usadas — vale investigar se essa variável contribui desproporcionalmente para a decisão em algum subgrupo. [PREENCHER: se houver tempo, rodar uma análise de fairness comparando taxas de erro entre grupos de gênero]
+**Risco de viés:** o dataset não inclui variáveis demográficas sensíveis (raça, gênero explícito como variável causal relevante), mas `gender` está entre as features usadas — vale investigar se essa variável contribui desproporcionalmente para a decisão em algum subgrupo. [Análise de fairness por gênero: o modelo apresenta recall de 76% para clientes do gênero masculino (n=726) contra 70% para o feminino (n=681) no conjunto de teste — uma diferença de 6 pontos percentuais. Isso significa que, proporcionalmente, mais clientes em risco real do gênero feminino deixam de ser identificados pelo sistema. Embora a diferença não seja extrema, ela indica um viés mensurável que merece atenção: em um cenário de produção, recomendaríamos investigar se essa disparidade decorre de padrões reais nos dados (ex: diferenças de comportamento de churn entre os grupos) ou de um artefato do modelo, e considerar técnicas de mitigação (reponderação por grupo, ajuste de threshold por subgrupo) antes de decisões de retenção serem tomadas com base nesse sistema.]
 
 **Privacidade:** os dados usados são de um dataset público anonimizado; em uso real, dados de clientes (cobrança, tempo de contrato) são sensíveis e exigiriam tratamento conforme LGPD.
 
