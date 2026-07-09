@@ -53,7 +53,7 @@ Resposta estruturada (JSON):
 
 ### Agent/model exploration
 
-Testamos três configurações de modelo estatístico antes de decidir:
+Testei três configurações de modelo estatístico antes de decidir:
 
 | Modelo | Recall (churn) | Precision (churn) | F1 |
 |---|---|---|---|
@@ -64,20 +64,20 @@ Testamos três configurações de modelo estatístico antes de decidir:
 
 Decisão: Random Forest com threshold ajustado para 0.3 (em vez do padrão 0.5), priorizando recall sobre precision — o custo de negócio de não identificar um cliente em risco é maior que o custo de uma ação de retenção desnecessária em um falso positivo. O Random Forest também foi preferido pela feature importance nativa, usada para embasar a explicação gerada pelo agente.
 
-Para o LLM, exploramos dois provedores:
+Para o LLM, explorei dois provedores:
 - **LM Studio (Llama 3 8B Instruct, quantizado Q4)** rodando localmente — sem custo, mas dependente da máquina do usuário estar ligada e com o servidor ativo.
 - **Anthropic API (Claude)** — sem limitação de disponibilidade, mas com custo por token; não há camada gratuita permanente para uso em produção.
 
 ### Deployment
 
 - Empacotado via Docker (`Dockerfile` + `docker-compose.yml`), sobe com `docker compose up`.
-- API hospedada em [PREENCHER: Railway/Render/outro].
+- API hospedada em Railway
 - Frontend servido como arquivo estático pela própria API FastAPI (`StaticFiles`), eliminando a necessidade de um serviço separado.
 - **Limitação documentada:** a versão hospedada na nuvem roda em modo `LLM_PROVIDER=local`, que aponta para um servidor LM Studio que só existe na máquina de desenvolvimento. Em produção na nuvem, essa chamada falha por design, e o guardrail de fallback assume — a API continua respondendo com a probabilidade calculada e uma mensagem informando que a explicação detalhada está indisponível. A demonstração completa (com explicação do LLM) foi gravada localmente, onde o LM Studio está ativo.
 
 ### CI/CD
 
-"Não implementamos CI/CD automatizado neste ciclo por restrição de tempo; o build e testes foram feitos manualmente antes de cada entrega."
+"Não implementei CI/CD automatizado neste ciclo por restrição de tempo; o build e testes foram feitos manualmente antes de cada entrega."
 
 ---
 
@@ -105,7 +105,7 @@ Para o LLM, exploramos dois provedores:
 - Validação de schema via Pydantic (FastAPI): tipos e campos obrigatórios verificados automaticamente antes do código de negócio rodar.
 
 **Saída:**
-- **Coerência de risco:** identificamos que o LLM, quando não recebia instrução explícita sobre o nível de risco, por vezes construía narrativas de "sinais de insatisfação" mesmo para clientes de baixo risco — invertendo o sentido do resultado do modelo. Corrigido determinando o enquadramento (alto/moderado/baixo risco) em código Python *antes* de montar o prompt, removendo do LLM a decisão de interpretar a direção do risco.
+- **Coerência de risco:** identifiquei que o LLM, quando não recebia instrução explícita sobre o nível de risco, por vezes construía narrativas de "sinais de insatisfação" mesmo para clientes de baixo risco — invertendo o sentido do resultado do modelo. Corrigido determinando o enquadramento (alto/moderado/baixo risco) em código Python *antes* de montar o prompt, removendo do LLM a decisão de interpretar a direção do risco.
 - **Idioma:** o LLM ocasionalmente respondia em inglês mesmo com prompt em português. Corrigido com instrução explícita de idioma, reforçada no início e no fim do prompt.
 - **Fallback:** chamadas ao LLM são protegidas por `try/except` com timeout de 30s. Em caso de falha (serviço indisponível, timeout), a API retorna a probabilidade calculada pelo modelo estatístico (sempre confiável, independente do LLM) e uma mensagem informativa, nunca um erro técnico cru.
 
@@ -116,7 +116,7 @@ Para o LLM, exploramos dois provedores:
 3. V3: adicionada instrução explícita de idioma após observar respostas em inglês.
 4. V4: adicionado fallback estruturado e suporte a dois provedores de LLM (local/cloud) via variável de ambiente, sem duplicar lógica de negócio.
 
-**O que não funcionou:** a primeira tentativa de usar apenas `class_weight="balanced"` no Random Forest teve efeito bem mais fraco que na Regressão Logística (recall 0.50 vs. 0.80) — decidimos não insistir em ajustar mais parâmetros do Random Forest e usar threshold tuning diretamente, que se mostrou mais previsível e fácil de justificar.
+**O que não funcionou:** a primeira tentativa de usar apenas `class_weight="balanced"` no Random Forest teve efeito bem mais fraco que na Regressão Logística (recall 0.50 vs. 0.80) — decidi não insistir em ajustar mais parâmetros do Random Forest e usar threshold tuning diretamente, que se mostrou mais previsível e fácil de justificar.
 
 ---
 
@@ -153,7 +153,7 @@ https://youtu.be/wo9p_HljWs8
 
 **O que funcionou bem:** a separação entre modelo estatístico (decisão numérica confiável) e LLM (comunicação) evitou que o sistema dependesse do LLM para a parte mais crítica (a própria previsão). Isso tornou o sistema resiliente mesmo quando o LLM falha.
 
-**O que não funcionou como planejado:** o LLM local (LM Studio) demonstrou comportamento instável entre sessões (descarregava o modelo da memória após inatividade, mesmo com o servidor HTTP ainda ativo), o que reforçou a importância prática do guardrail de fallback — não como teoria, mas como algo que de fato aconteceu durante o desenvolvimento.
+**O que não funcionou como planejado:** o LLM local (LM Studio) demonstrou comportamento instável entre sessões (descarregava o modelo da memória após inatividade, mesmo com o servidor HTTP ainda ativo), o que reforçou a importância prática do guardrail de fallback.
 
 **Próximos passos com mais tempo:**
 - Explicabilidade por cliente individual via SHAP (hoje usamos apenas feature importance agregada do modelo).
@@ -167,7 +167,7 @@ https://youtu.be/wo9p_HljWs8
 
 **Quem pode ser prejudicado por um erro do sistema?** Falsos negativos (cliente em risco não identificado) resultam em perda de receita sem chance de ação preventiva — custo para a empresa, não diretamente para o cliente. Falsos positivos podem gerar contato de retenção desnecessário/inoportuno para um cliente que não pretendia cancelar.
 
-**Risco de viés:** o dataset não inclui variáveis demográficas sensíveis (raça, gênero explícito como variável causal relevante), mas `gender` está entre as features usadas — vale investigar se essa variável contribui desproporcionalmente para a decisão em algum subgrupo. [Análise de fairness por gênero: o modelo apresenta recall de 76% para clientes do gênero masculino (n=726) contra 70% para o feminino (n=681) no conjunto de teste — uma diferença de 6 pontos percentuais. Isso significa que, proporcionalmente, mais clientes em risco real do gênero feminino deixam de ser identificados pelo sistema. Embora a diferença não seja extrema, ela indica um viés mensurável que merece atenção: em um cenário de produção, recomendaríamos investigar se essa disparidade decorre de padrões reais nos dados (ex: diferenças de comportamento de churn entre os grupos) ou de um artefato do modelo, e considerar técnicas de mitigação (reponderação por grupo, ajuste de threshold por subgrupo) antes de decisões de retenção serem tomadas com base nesse sistema.]
+**Risco de viés:** o dataset não inclui variáveis demográficas sensíveis (raça, gênero explícito como variável causal relevante), mas `gender` está entre as features usadas — vale investigar se essa variável contribui desproporcionalmente para a decisão em algum subgrupo. [Análise de fairness por gênero: o modelo apresenta recall de 76% para clientes do gênero masculino (n=726) contra 70% para o feminino (n=681) no conjunto de teste — uma diferença de 6 pontos percentuais. Isso significa que, proporcionalmente, mais clientes em risco real do gênero feminino deixam de ser identificados pelo sistema. Embora a diferença não seja extrema, ela indica um viés mensurável que merece atenção: em um cenário de produção, recomendo investigar se essa disparidade decorre de padrões reais nos dados (ex: diferenças de comportamento de churn entre os grupos) ou de um artefato do modelo, e considerar técnicas de mitigação (reponderação por grupo, ajuste de threshold por subgrupo) antes de decisões de retenção serem tomadas com base nesse sistema.]
 
 **Privacidade:** os dados usados são de um dataset público anonimizado; em uso real, dados de clientes (cobrança, tempo de contrato) são sensíveis e exigiriam tratamento conforme LGPD.
 
